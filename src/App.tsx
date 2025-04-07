@@ -1,9 +1,13 @@
-import { Button } from '@/components/ui/button'
+import { GanttChart } from '@/components/gantt-chart'
+import { TASKS } from '@/mocks/tasks'
 
 export default function App () {
   return (
-    <div className="flex flex-col items-center justify-center min-h-svh">
-      <Button>Click me</Button>
-    </div>
+    <main className='container mx-auto py-4'>
+      <h1 className='text-4xl font-thin tracking-wider uppercase text-center mb-3'>Shadcn Gantt Chart</h1>
+      <GanttChart className="border rounded-lg" data={TASKS}>
+        Gantt Chart Content
+      </GanttChart>
+    </main>
   )
 }
