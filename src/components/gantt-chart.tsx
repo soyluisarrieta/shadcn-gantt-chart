@@ -8,7 +8,6 @@ export interface GanttData {
   startDate: Date;
   endDate: Date;
   progress?: number;
-  category?: string;
   color?: { background: string; text: string };
   icon?: string | React.ComponentType | React.JSX.Element;
 }
@@ -73,14 +72,10 @@ function GanttTimeline ({
 }) {
   const { data } = useGanttContext()
 
-  const startDate = data.reduce(
-    (earliest, item) => (item.startDate < earliest ? item.startDate : earliest),
-    data[0].startDate
-  )
-  const endDate = data.reduce(
-    (latest, item) => (item.endDate > latest ? item.endDate : latest),
-    data[0].endDate
-  )
+  const startDate = data.reduce((earliest, data) =>
+    data.startDate < earliest ? data.startDate : earliest, data[0].startDate)
+  const endDate = data.reduce((latest, data) =>
+    data.endDate > latest ? data.endDate : latest, data[0].endDate)
 
   const adjustedStartDate = new Date(startDate)
   adjustedStartDate.setDate(adjustedStartDate.getDate() - 3)
@@ -146,12 +141,9 @@ function GanttTimeline ({
       </div>
 
       <div className="relative h-full">
-        <div
-          className="absolute top-0 bottom-0 w-px bg-primary z-10"
-          style={{
-            left: `${allDates.findIndex(date => isToday(date)) * 30 + 15}px`
-          }}
-        />
+        <div className="absolute top-0 bottom-0 w-px bg-primary z-10" style={{
+          left: `${allDates.findIndex(date => isToday(date)) * 30 + 15}px`
+        }}></div>
       </div>
     </div>
   )
@@ -167,13 +159,8 @@ function GanttItemBar ({
   const { startDate } = useGanttContext()
   const adjustedStartDate = new Date(startDate)
   adjustedStartDate.setDate(adjustedStartDate.getDate() - 3)
-
-  const daysFromStart = Math.floor(
-    (data.startDate.getTime() - adjustedStartDate.getTime()) / (1000 * 60 * 60 * 24)
-  )
-  const duration = Math.ceil(
-    (data.endDate.getTime() - data.startDate.getTime()) / (1000 * 60 * 60 * 24)
-  )
+  const daysFromStart = Math.floor((data.startDate.getTime() - adjustedStartDate.getTime()) / (1000 * 60 * 60 * 24))
+  const duration = Math.ceil((data.endDate.getTime() - data.startDate.getTime()) / (1000 * 60 * 60 * 24))
 
   const leftPosition = `calc(${daysFromStart} * ${dayWidth})`
   const width = `calc(${duration} * ${dayWidth})`
@@ -197,48 +184,67 @@ function GanttItemBar ({
 
         <div className="flex items-center gap-1 z-10 whitespace-nowrap">
           {Icon && (
-            <span className="mr-1">
+            <span>
               {typeof Icon === 'function' ? <Icon /> : Icon}
             </span>
           )}
-          {data.name}
-          {data.progress !== undefined && (
-            <span className="ml-2">{data.progress}%</span>
-          )}
+          <span className="font-medium">{data.name}</span>
         </div>
       </div>
     </div>
   )
 }
 
+function GanttWorkspace () {
+  const { data } = useGanttContext()
+  return (
+    <div className="relative mt-8">
+      {data.map(item => (
+        <GanttItemBar key={item.id} data={item} />
+      ))}
+    </div>
+  )
+}
+
+function GanttContent ({
+  children
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <ScrollArea type='always' style={{ width: '100%' }}>
+      {children}
+      <ScrollBar orientation="horizontal" />
+    </ScrollArea>
+  )
+}
+
 function GanttChart ({
   className,
-  data
-}: {
+  data,
+  children
+}:{
   className?: string;
   data: GanttData[];
+  children: React.ReactNode;
 }) {
-  const startDate = data.reduce(
-    (earliest, item) => (item.startDate < earliest ? item.startDate : earliest),
-    data[0].startDate
-  )
+  const startDate = data.reduce((earliest, item) =>
+    item.startDate < earliest ? item.startDate : earliest, data[0].startDate)
 
   return (
     <GanttContext.Provider value={{ data, startDate }}>
       <div className={cn('flex flex-1 overflow-hidden', className)}>
-        <GanttSidebar />
-        <ScrollArea className="w-full">
-          <GanttTimeline />
-          <div className="p-2">
-            {data.map(item => (
-              <GanttItemBar key={item.id} data={item} />
-            ))}
-          </div>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
+        {children}
       </div>
     </GanttContext.Provider>
   )
 }
 
-export { GanttChart }
+export {
+  GanttChart,
+  GanttSidebar,
+  GanttContent,
+  GanttTimeline,
+  GanttWorkspace,
+  GanttItemBar
+}
