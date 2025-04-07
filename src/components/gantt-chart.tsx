@@ -12,6 +12,7 @@ export interface GanttData {
   icon?: string | React.ComponentType | React.JSX.Element;
 }
 
+// Global context
 const GanttContext = React.createContext<{
   data: GanttData[];
   startDate: Date;
@@ -22,6 +23,7 @@ const GanttContext = React.createContext<{
   setSidebar: (sidebar: { width: string; [key: string]: any }) => void;
     } | null>(null)
 
+// Custom hook context
 const useGanttContext = () => {
   const context = React.useContext(GanttContext)
   if (!context) {
@@ -40,6 +42,7 @@ const useGanttContext = () => {
   }
 }
 
+// Helper function to get all months in a date range
 const getMonthsInRange = (startDate: Date, endDate: Date): string[] => {
   const months: string[] = []
   const currentDate = new Date(startDate)
@@ -55,6 +58,7 @@ const getMonthsInRange = (startDate: Date, endDate: Date): string[] => {
   return months
 }
 
+// Sidebar component
 function GanttSidebar ({ width = '16vw' }) {
   const { data, sidebar, setSidebarWidth } = useGanttContext()
 
@@ -83,6 +87,7 @@ function GanttSidebar ({ width = '16vw' }) {
   )
 }
 
+// Timeline component
 function GanttTimeline ({
   onDateClick,
   dayWidth = '2rem'
@@ -169,6 +174,7 @@ function GanttTimeline ({
   )
 }
 
+// Item bar component
 function GanttItemBar ({
   data,
   dayWidth = '2rem'
@@ -215,6 +221,7 @@ function GanttItemBar ({
   )
 }
 
+// Workspace component
 function GanttWorkspace () {
   const { data } = useGanttContext()
   return (
@@ -226,6 +233,7 @@ function GanttWorkspace () {
   )
 }
 
+// Content component
 function GanttContent ({
   children
 }: {
@@ -241,6 +249,7 @@ function GanttContent ({
   )
 }
 
+// Main Gantt chart component
 function GanttChart ({
   className,
   data,
