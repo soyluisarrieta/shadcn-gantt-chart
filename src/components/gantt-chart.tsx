@@ -15,14 +15,29 @@ export interface GanttData {
 const GanttContext = React.createContext<{
   data: GanttData[];
   startDate: Date;
-} | null>(null)
+  sidebar: {
+    width: string;
+    [key: string]: any;
+  };
+  setSidebar: (sidebar: { width: string; [key: string]: any }) => void;
+    } | null>(null)
 
 const useGanttContext = () => {
   const context = React.useContext(GanttContext)
   if (!context) {
     throw new Error('useGanttContext must be used within a GanttProvider')
   }
-  return context
+
+  const setSidebarWidth = React.useCallback((width: string) => {
+    context.setSidebar({ ...context.sidebar, width })
+  }, [context])
+
+  return {
+    data: context.data,
+    startDate: context.startDate,
+    sidebar: context.sidebar,
+    setSidebarWidth
+  }
 }
 
 const getMonthsInRange = (startDate: Date, endDate: Date): string[] => {
@@ -41,10 +56,15 @@ const getMonthsInRange = (startDate: Date, endDate: Date): string[] => {
 }
 
 function GanttSidebar ({ width = '16vw' }) {
-  const { data } = useGanttContext()
+  const { data, sidebar, setSidebarWidth } = useGanttContext()
+
+  React.useEffect(() => {
+    if (sidebar.width === width) return
+    setSidebarWidth(width)
+  }, [setSidebarWidth, sidebar, width])
 
   return (
-    <div className="border-r flex-none" style={{ width }}>
+    <div className="border-r flex-none overflow-hidden" style={{ width }}>
       <div className="h-8 flex items-center font-medium m-2">Lista de Tareas</div>
 
       <div className="mt-8 border-t p-2">
@@ -211,8 +231,10 @@ function GanttContent ({
 }: {
   children: React.ReactNode
 }) {
+  const { sidebar } = useGanttContext()
+
   return (
-    <ScrollArea type='always' style={{ width: '100%' }}>
+    <ScrollArea type='always' style={{ width: `calc(100% - ${sidebar.width})` }}>
       {children}
       <ScrollBar orientation="horizontal" />
     </ScrollArea>
@@ -231,8 +253,17 @@ function GanttChart ({
   const startDate = data.reduce((earliest, item) =>
     item.startDate < earliest ? item.startDate : earliest, data[0].startDate)
 
+  const [sidebar, setSidebar] = React.useState({ width: '16vw' })
+
+  const contextValue = {
+    data,
+    startDate,
+    sidebar,
+    setSidebar
+  }
+
   return (
-    <GanttContext.Provider value={{ data, startDate }}>
+    <GanttContext.Provider value={contextValue}>
       <div className={cn('flex flex-1 overflow-hidden', className)}>
         {children}
       </div>
