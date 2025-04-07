@@ -9,6 +9,7 @@ export interface GanttData {
   endDate: Date;
   progress?: number;
   category?: string;
+  color?: { background: string; text: string };
   icon?: string | React.ComponentType | React.JSX.Element;
 }
 
@@ -65,7 +66,7 @@ function GanttSidebar ({ width = '16vw' }) {
 
 function GanttTimeline ({
   onDateClick,
-  dayWidth = '30px'
+  dayWidth = '2rem'
 }: {
   onDateClick?: (date: Date) => void;
   dayWidth?: string;
@@ -156,13 +157,65 @@ function GanttTimeline ({
   )
 }
 
+function GanttItemBar ({
+  data,
+  dayWidth = '2rem'
+}: {
+  data: GanttData;
+  dayWidth?: string;
+}) {
+  const { startDate } = useGanttContext()
+  const adjustedStartDate = new Date(startDate)
+  adjustedStartDate.setDate(adjustedStartDate.getDate() - 3)
+
+  const daysFromStart = Math.floor(
+    (data.startDate.getTime() - adjustedStartDate.getTime()) / (1000 * 60 * 60 * 24)
+  )
+  const duration = Math.ceil(
+    (data.endDate.getTime() - data.startDate.getTime()) / (1000 * 60 * 60 * 24)
+  )
+
+  const leftPosition = `calc(${daysFromStart} * ${dayWidth})`
+  const width = `calc(${duration} * ${dayWidth})`
+  const Icon = data?.icon
+
+  return (
+    <div className="h-10 relative mb-2">
+      <div
+        className="absolute h-8 rounded-md flex items-center px-2 text-sm text-background bg-foreground overflow-hidden"
+        style={{
+          left: leftPosition,
+          width: width,
+          backgroundColor: data.color?.background,
+          color: data.color?.text
+        }}
+      >
+        <div
+          className="absolute top-0 left-0 h-full bg-white/20"
+          style={{ width: `${data.progress ?? 0}%` }}
+        />
+
+        <div className="flex items-center gap-1 z-10 whitespace-nowrap">
+          {Icon && (
+            <span className="mr-1">
+              {typeof Icon === 'function' ? <Icon /> : Icon}
+            </span>
+          )}
+          {data.name}
+          {data.progress !== undefined && (
+            <span className="ml-2">{data.progress}%</span>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function GanttChart ({
   className,
-  children,
   data
 }: {
   className?: string;
-  children: React.ReactNode;
   data: GanttData[];
 }) {
   const startDate = data.reduce(
@@ -176,7 +229,11 @@ function GanttChart ({
         <GanttSidebar />
         <ScrollArea className="w-full">
           <GanttTimeline />
-          {children}
+          <div className="p-2">
+            {data.map(item => (
+              <GanttItemBar key={item.id} data={item} />
+            ))}
+          </div>
           <ScrollBar orientation="horizontal" />
         </ScrollArea>
       </div>
