@@ -1,4 +1,5 @@
 import React from 'react'
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
 
 export interface GanttData {
@@ -24,6 +25,21 @@ const useGanttContext = () => {
   return context
 }
 
+const getMonthsInRange = (startDate: Date, endDate: Date): string[] => {
+  const months: string[] = []
+  const currentDate = new Date(startDate)
+
+  while (currentDate <= endDate) {
+    const monthName = currentDate.toLocaleString('default', { month: 'long' })
+    if (!months.includes(monthName)) {
+      months.push(monthName)
+    }
+    currentDate.setMonth(currentDate.getMonth() + 1)
+  }
+
+  return months
+}
+
 function GanttSidebar ({ width = '16vw' }) {
   const { data } = useGanttContext()
 
@@ -47,6 +63,99 @@ function GanttSidebar ({ width = '16vw' }) {
   )
 }
 
+function GanttTimeline ({
+  onDateClick,
+  dayWidth = '30px'
+}: {
+  onDateClick?: (date: Date) => void;
+  dayWidth?: string;
+}) {
+  const { data } = useGanttContext()
+
+  const startDate = data.reduce(
+    (earliest, item) => (item.startDate < earliest ? item.startDate : earliest),
+    data[0].startDate
+  )
+  const endDate = data.reduce(
+    (latest, item) => (item.endDate > latest ? item.endDate : latest),
+    data[0].endDate
+  )
+
+  const adjustedStartDate = new Date(startDate)
+  adjustedStartDate.setDate(adjustedStartDate.getDate() - 3)
+
+  const months = getMonthsInRange(adjustedStartDate, endDate)
+
+  const allDates: Date[] = []
+  const currentDate = new Date(adjustedStartDate)
+  while (currentDate <= endDate) {
+    allDates.push(new Date(currentDate))
+    currentDate.setDate(currentDate.getDate() + 1)
+  }
+
+  const datesByMonth: Record<string, Date[]> = {}
+  months.forEach(month => {
+    datesByMonth[month] = allDates.filter(date =>
+      date.toLocaleString('default', { month: 'long' }) === month
+    )
+  })
+
+  const isToday = (date: Date): boolean => {
+    const today = new Date()
+    return date.getDate() === today.getDate() &&
+      date.getMonth() === today.getMonth() &&
+      date.getFullYear() === today.getFullYear()
+  }
+
+  return (
+    <div className="timeline w-full">
+      <div className="flex">
+        {months.map((month, index) => {
+          const daysInMonth = datesByMonth[month].length
+          const monthWidth = `calc(${daysInMonth} * ${dayWidth})`
+
+          return (
+            <div
+              key={`month-${index}`}
+              className="w-full flex-none font-medium text-muted-foreground p-2 capitalize"
+              style={{ width: monthWidth }}
+            >
+              <span className='sticky left-2'>{month}</span>
+            </div>
+          )
+        })}
+      </div>
+
+      <div className="flex border-b">
+        {allDates.map((date, index) => {
+          const dayNumber = date.getDate()
+          const isCurrentDay = isToday(date)
+
+          return (
+            <div
+              key={`day-${index}`}
+              className={`flex-none text-center py-1 text-muted-foreground ${isCurrentDay ? 'bg-primary/10 text-primary font-bold rounded-full' : ''}`}
+              onClick={() => onDateClick?.(date)}
+              style={{ width: dayWidth }}
+            >
+              {dayNumber}
+            </div>
+          )
+        })}
+      </div>
+
+      <div className="relative h-full">
+        <div
+          className="absolute top-0 bottom-0 w-px bg-primary z-10"
+          style={{
+            left: `${allDates.findIndex(date => isToday(date)) * 30 + 15}px`
+          }}
+        />
+      </div>
+    </div>
+  )
+}
+
 function GanttChart ({
   className,
   children,
@@ -63,9 +172,13 @@ function GanttChart ({
 
   return (
     <GanttContext.Provider value={{ data, startDate }}>
-      <div className={cn('flex flex-1', className)}>
+      <div className={cn('flex flex-1 overflow-hidden', className)}>
         <GanttSidebar />
-        {children}
+        <ScrollArea className="w-full">
+          <GanttTimeline />
+          {children}
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
       </div>
     </GanttContext.Provider>
   )
