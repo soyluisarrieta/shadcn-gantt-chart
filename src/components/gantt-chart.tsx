@@ -138,8 +138,8 @@ function GanttTimeline ({
           return (
             <div
               key={`month-${index}`}
-              className="w-full flex-none font-medium text-muted-foreground p-2 capitalize"
-              style={{ width: monthWidth }}
+              className="w-full flex-none text-muted-foreground/80 px-2 pt-4 pb-1 capitalize"
+              style={{ width: monthWidth, fontSize: '0.95rem' }}
             >
               <span className='sticky left-2'>{month}</span>
             </div>
@@ -155,7 +155,7 @@ function GanttTimeline ({
           return (
             <div
               key={`day-${index}`}
-              className={`flex-none text-center py-1 text-muted-foreground ${isCurrentDay ? 'bg-primary/10 text-primary font-bold rounded-full' : ''}`}
+              className={`flex-none text-center py-1 font-medium text-muted-foreground/40 text-sm ${isCurrentDay ? 'bg-primary/10 text-primary font-bold rounded-full' : ''}`}
               onClick={() => onDateClick?.(date)}
               style={{ width: dayWidth }}
             >
