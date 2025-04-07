@@ -103,7 +103,7 @@ function GanttTimeline ({
     data.endDate > latest ? data.endDate : latest, data[0].endDate)
 
   const adjustedStartDate = new Date(startDate)
-  adjustedStartDate.setDate(adjustedStartDate.getDate() - 3)
+  adjustedStartDate.setDate(adjustedStartDate.getDate() - 100)
 
   const months = getMonthsInRange(adjustedStartDate, endDate)
 
@@ -184,7 +184,7 @@ function GanttItemBar ({
 }) {
   const { startDate } = useGanttContext()
   const adjustedStartDate = new Date(startDate)
-  adjustedStartDate.setDate(adjustedStartDate.getDate() - 3)
+  adjustedStartDate.setDate(adjustedStartDate.getDate() - 100)
   const daysFromStart = Math.floor((data.startDate.getTime() - adjustedStartDate.getTime()) / (1000 * 60 * 60 * 24))
   const duration = Math.ceil((data.endDate.getTime() - data.startDate.getTime()) / (1000 * 60 * 60 * 24))
 
@@ -235,14 +235,34 @@ function GanttWorkspace () {
 
 // Content component
 function GanttContent ({
-  children
+  children,
+  dayWidth = '2rem'
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
+  dayWidth?: string;
 }) {
-  const { sidebar } = useGanttContext()
+  const { sidebar, data } = useGanttContext()
+  const scrollAreaRef = React.useRef<HTMLDivElement>(null)
+
+  React.useEffect(() => {
+    if (scrollAreaRef.current && data.length > 0) {
+      const firstItem = data[0]
+      const adjustedStartDate = new Date(firstItem.startDate)
+      adjustedStartDate.setDate(adjustedStartDate.getDate() - 100)
+      const daysFromStart = Math.floor((firstItem.startDate.getTime() - adjustedStartDate.getTime()) / (1000 * 60 * 60 * 24))
+
+      const dayWidthValue = parseFloat(dayWidth) * 16
+      const scrollPosition = daysFromStart * dayWidthValue
+
+      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]')
+      if (scrollContainer) {
+        scrollContainer.scrollLeft = scrollPosition - 20
+      }
+    }
+  }, [data, dayWidth])
 
   return (
-    <ScrollArea type='always' style={{ width: `calc(100% - ${sidebar.width})` }}>
+    <ScrollArea ref={scrollAreaRef} type='always' style={{ width: `calc(100% - ${sidebar.width})` }}>
       {children}
       <ScrollBar orientation="horizontal" />
     </ScrollArea>
