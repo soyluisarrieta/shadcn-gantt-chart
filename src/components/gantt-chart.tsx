@@ -99,11 +99,14 @@ function GanttTimeline ({
 
   const startDate = data.reduce((earliest, data) =>
     data.startDate < earliest ? data.startDate : earliest, data[0].startDate)
-  const endDate = data.reduce((latest, data) =>
+  const calculatedEndDate = data.reduce((latest, data) =>
     data.endDate > latest ? data.endDate : latest, data[0].endDate)
 
+  const endDate = new Date(calculatedEndDate)
+  endDate.setDate(endDate.getDate() + 30)
+
   const adjustedStartDate = new Date(startDate)
-  adjustedStartDate.setDate(adjustedStartDate.getDate() - 100)
+  adjustedStartDate.setDate(adjustedStartDate.getDate() - 50)
 
   const months = getMonthsInRange(adjustedStartDate, endDate)
 
@@ -184,7 +187,7 @@ function GanttItemBar ({
 }) {
   const { startDate } = useGanttContext()
   const adjustedStartDate = new Date(startDate)
-  adjustedStartDate.setDate(adjustedStartDate.getDate() - 100)
+  adjustedStartDate.setDate(adjustedStartDate.getDate() - 50)
   const daysFromStart = Math.floor((data.startDate.getTime() - adjustedStartDate.getTime()) / (1000 * 60 * 60 * 24))
   const duration = Math.ceil((data.endDate.getTime() - data.startDate.getTime()) / (1000 * 60 * 60 * 24))
 
@@ -248,7 +251,7 @@ function GanttContent ({
     if (scrollAreaRef.current && data.length > 0) {
       const firstItem = data[0]
       const adjustedStartDate = new Date(firstItem.startDate)
-      adjustedStartDate.setDate(adjustedStartDate.getDate() - 100)
+      adjustedStartDate.setDate(adjustedStartDate.getDate() - 50)
       const daysFromStart = Math.floor((firstItem.startDate.getTime() - adjustedStartDate.getTime()) / (1000 * 60 * 60 * 24))
 
       const dayWidthValue = parseFloat(dayWidth) * 16
